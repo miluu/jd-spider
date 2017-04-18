@@ -5,7 +5,7 @@ import * as _ from 'lodash';
 console.log('Start...');
 
 superagent.get('https://cnodejs.org/')
-  .end(function (err, res) {
+  .end((err, res) => {
     if (err) {
       console.error(err);
       return;
