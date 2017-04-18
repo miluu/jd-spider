@@ -1,11 +1,13 @@
 var gulp = require('gulp');
 var del = require('del');
 var ts = require('gulp-typescript');
+var path = require('path');
 
 var BUILT_PATH = 'built';
 var SRC_PATH = 'src';
 
 var tsProject = ts.createProject('tsconfig.json');
+
 
 gulp.task('clean', function (paths) {
   del([BUILT_PATH]).then(paths => {
@@ -21,5 +23,5 @@ gulp.task('default', function () {
 });
 
 gulp.task('watch', ['default'], function () {
-  gulp.watch(['src/**/*'], ['default']);
+  gulp.watch([path.join(SRC_PATH, '**/*')], ['default']);
 });

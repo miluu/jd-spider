@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "start": "gulp watch",
-    "test": "node built/index.js",
+    "test": "node index.js",
     "build": "gulp",
     "watch": "gulp watch",
     "clean": "gulp clean"
