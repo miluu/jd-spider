@@ -18,8 +18,10 @@
   },
   "dependencies": {
     "@types/cheerio": "^0.22.1",
+    "@types/lodash": "^4.14.62",
     "@types/superagent": "^2.0.36",
     "cheerio": "^0.22.0",
+    "lodash": "^4.17.4",
     "superagent": "^3.5.2"
   }
 }

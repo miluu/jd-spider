@@ -4,6 +4,10 @@
   version "0.22.1"
   resolved "http://registry.npm.taobao.org/@types/cheerio/download/@types/cheerio-0.22.1.tgz#740c4cd8c4d3f3074f83b9ab62e711eac2c764ce"
 
+"@types/lodash":
+  version "4.14.62"
+  resolved "http://registry.npm.taobao.org/@types/lodash/download/@types/lodash-4.14.62.tgz#8674f9861582148a60b7a89cb260f11378d11683"
+
 "@types/node@*":
   version "7.0.12"
   resolved "http://registry.npm.taobao.org/@types/node/download/@types/node-7.0.12.tgz#ae5f67a19c15f752148004db07cbbb372e69efc9"
@@ -827,6 +831,10 @@ liftoff@^2.1.0:
     lodash.mapvalues "^4.4.0"
     rechoir "^0.6.2"
     resolve "^1.1.7"
+
+lodash:
+  version "4.17.4"
+  resolved "http://registry.npm.taobao.org/lodash/download/lodash-4.17.4.tgz#78203a4d1c328ae1d86dca6460e369b57f4055ae"
 
 lodash._basecopy@^3.0.0:
   version "3.0.1"
