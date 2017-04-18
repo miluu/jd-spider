@@ -1,7 +1,13 @@
-export default class Test {
-  constructor (public name: string) {
+export class A {
+  constructor(public name: string) {
+  }
+}
+
+export class AA extends A {
+  constructor(name: string) {
+    super(name);
   }
   say () {
-    console.log(`My name is ${this.name}`);
+    console.log(`My Name is ${this.name}.`);
   }
 }
