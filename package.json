@@ -1,0 +1,25 @@
+{
+  "name": "spider",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "gulp watch",
+    "test": "node built/index.js",
+    "build": "gulp",
+    "watch": "gulp watch",
+    "clean": "gulp clean"
+  },
+  "devDependencies": {
+    "del": "^2.2.2",
+    "gulp": "^3.9.1",
+    "gulp-typescript": "^3.1.6",
+    "typescript": "^2.2.2"
+  },
+  "dependencies": {
+    "@types/cheerio": "^0.22.1",
+    "@types/superagent": "^2.0.36",
+    "cheerio": "^0.22.0",
+    "superagent": "^3.5.2"
+  }
+}
