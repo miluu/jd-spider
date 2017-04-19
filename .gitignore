@@ -2,3 +2,4 @@ node_modules/
 yarn-err.log
 built/
 .DS_Store
+log/
