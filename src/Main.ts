@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as Promise from 'bluebird';
 import * as log4js from 'log4js';
+import * as request from 'request';
 
 log4js.configure({
   appenders: [
@@ -15,29 +16,21 @@ const log = log4js.getLogger('spider');
 log.info('App start...')
 export default class Main {
   constructor() {
-    // this._readConfig();
-    const p1 = new Promise((resolve, reject) => {
-      setTimeout(function() {
-        resolve('hello');
-      }, 1000);
-    });
-    const p2 = new Promise((resolve, reject) => {
-      const b = Math.random() > 0.5;
-      setTimeout(function() {
-        b ? resolve('world'): reject('What the fxxk!');
-      }, 2000);
-    });
-    p1
-      .then((data) => {
-        log.debug(data.toString());
-        return p2;
-      })
-      .then((data) => {
-        log.debug(data.toString());
-      })
-      .catch((err) => {
-        log.error(err.toString());
-      });
+      const ws = fs.createWriteStream(path.join(__dirname, '../files/img/test.jpg'));
+      request('https://m.360buyimg.com/n0/jfs/t4216/312/1944832528/564602/49935d7f/58c8be3eNf82db2f7.jpg!q70.jpg')
+        .on('data', (data) => {
+          log.debug('get data.')
+        })
+        .on('request', () => {
+          log.info('start download image.')
+        })
+        .on('error', (err) => {
+          log.error('download error.')
+        })
+        .on('complete', () => {
+          log.info('image downloaded.')
+        })
+        .pipe(ws);
   }
 
   private _readConfig () {

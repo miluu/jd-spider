@@ -21,11 +21,13 @@
     "@types/cheerio": "^0.22.1",
     "@types/lodash": "^4.14.62",
     "@types/log4js": "^0.0.32",
+    "@types/request": "^0.0.42",
     "@types/superagent": "^2.0.36",
     "bluebird": "^3.5.0",
     "cheerio": "^0.22.0",
     "lodash": "^4.17.4",
     "log4js": "^1.1.1",
+    "request": "^2.81.0",
     "superagent": "^3.5.2"
   }
 }
