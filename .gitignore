@@ -4,3 +4,4 @@ built/
 .DS_Store
 log/
 npm-debug.log
+files/
