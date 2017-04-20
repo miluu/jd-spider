@@ -1,16 +1,20 @@
 import * as request from 'request';
 import * as cheerio from 'cheerio';
+import * as gm from 'gm';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as _ from 'lodash';
 import * as Promise from 'bluebird';
 import logger from './logger';
 import {FILES_PATH} from './paths';
+const mkdirp = require('mkdirp');
 
 module item {
 
   export function getItem (url: string) {
     logger.info(`Start get item from page: ${url}`);
+    mkdirp.sync(path.join(FILES_PATH, 'img/xxx/ddd/ff.jpg'));
+
     analysePagePromise(url)
       .then(body => {
         logger.debug(body);
@@ -21,6 +25,10 @@ module item {
     downloadImagePromise('http://m.360buyimg.com/n12/jfs/t2401/162/562922260/270583/da523560/5617937dN8247cd6e.jpg!q70.jpg', path.join(FILES_PATH, 'img/xxx/test.jpg'))
       .then(() => {
         logger.info('Image download success.');
+        return createThumbPromise(path.join(FILES_PATH, 'img/xxx/test.jpg'));
+      })
+      .then(() => {
+        logger.info('Thumb created.');
       })
       .catch(err => {
         logger.error(err);
@@ -45,7 +53,7 @@ module item {
     });
   }
 
-  function analyseHtml (html: string) {
+  function analyseHtml (html: string): any {
     const $ = cheerio.load(html);
     const title = $('.title-text').text() || '暂无标题';
     const $description = $('.prod-act');
@@ -73,7 +81,7 @@ module item {
     };
   }
 
-  function downloadImagePromise (url: string, filename: string) {
+  function downloadImagePromise (url: string, filename: string): Promise<any> {
     const dirname = path.dirname(filename);
     if (!fs.existsSync(dirname)) {
       fs.mkdirSync(dirname);
@@ -93,6 +101,30 @@ module item {
         }
       })
         .pipe(fs.createWriteStream(filename));
+    });
+  }
+
+  function createThumbPromise (sourceFilename: string, thumbFilename?: string): Promise<any> {
+
+    const sourceFile = path.parse(sourceFilename);
+    console.log(sourceFile);
+    if (!thumbFilename) {
+      thumbFilename = path.join(sourceFile.dir, `${sourceFile.name}_thumb${sourceFile.ext || ''}`);
+    }
+    const outputDir = path.dirname(thumbFilename);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir);
+    }
+    return new Promise((resolve, reject) => {
+      gm(sourceFilename)
+        .resize(null, 200)
+        .write(thumbFilename, (err) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve({source: sourceFilename, thumb: thumbFilename});
+        });
     });
   }
 

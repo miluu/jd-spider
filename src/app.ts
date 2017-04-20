@@ -10,16 +10,7 @@ import {
 module app {
   export function run () {
     logger.info('App start.');
-    // item.getItem('https://item.m.jd.com/product/11781267.html');
-    gm(path.join(FILES_PATH, 'img/xxx/test.jpg'))
-      .resize(null, 320)
-      .write(path.join(FILES_PATH, 'img/xxx/test_thumb.jpg'), (err) => {
-        if (err) {
-          logger.error(err.toString());
-          return;
-        }
-        logger.info('Create thumb success.');
-      });
+    item.getItem('https://item.m.jd.com/product/11781267.html');
   }
 }
 
