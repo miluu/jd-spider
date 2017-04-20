@@ -1,0 +1,10 @@
+[
+  {
+    "type": "console"
+  },
+  {
+    "type": "file",
+    "filename": "jd-spider.log",
+    "category": "spider"
+  }
+]
