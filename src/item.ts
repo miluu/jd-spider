@@ -30,7 +30,7 @@ module item {
   }
 
   interface IDetailAttr {
-    lable: string;
+    label: string;
     value: string;
     operator?: string;
   }
@@ -41,84 +41,90 @@ module item {
   }
 
   const detailTmpl = getDetailTemplate();
+  const DESCRIPTION_MAX_LENGTH = 70;
 
-  export function getItem (url: string, brand: string) {
+  export function getItemPromise (url: string, brand: string): Promise<any> {
     logger.info('------>');
     logger.info(`开始获取商品信息: ${url}`);
 
     let itemInfo: IItemInfo = {};
     let originInfo: IItemInfo;
-    analysePagePromise(url)
-      .then(info => {
-        originInfo = info;
-        logger.info('页面解析完成。');
-        info.brand = brand;
-        itemInfo.brand = info.brand;
-        itemInfo.title = info.title;
-        itemInfo.description = info.description;
-        itemInfo.price = info.price;
-        itemInfo.goodsno = info.goodsno;
-        if (checkItemExist(info.goodsno)) {
-          return Promise.reject('Exist');
-        }
-        return getDetailInfoPromise(originInfo.detailsApi);
-      })
-      .then((orginDetailInfo: any) => {
-        let detailInfo: IDetailInfo;
-        try {
-          detailInfo = {
-            attrs: orginDetailInfo.ware.attrs,
-            bookAttrs: orginDetailInfo.ware.bookAttrs
-          };
-        } catch (e) {
-          return Promise.reject(e);
-        }
+    return new Promise((resolve, reject) => {
+      analysePagePromise(url)
+        .then(info => {
+          originInfo = info;
+          logger.info('页面解析完成。');
+          info.brand = brand;
+          itemInfo.brand = info.brand;
+          itemInfo.title = info.title;
+          itemInfo.description = info.description;
+          itemInfo.price = info.price;
+          itemInfo.goodsno = info.goodsno;
+          if (checkItemExist(info.goodsno)) {
+            return Promise.reject('Exist');
+          }
+          return getDetailInfoPromise(originInfo.detailsApi);
+        })
+        .then((orginDetailInfo: any) => {
+          let detailInfo: IDetailInfo;
+          try {
+            detailInfo = {
+              attrs: orginDetailInfo.ware.attrs,
+              bookAttrs: orginDetailInfo.ware.bookAttrs
+            };
+          } catch (e) {
+            return Promise.reject(e);
+          }
 
-        return createDetailPromise(detailInfo, itemInfo);
-      })
-      .then((newDetailInfo: IDetailInfo) => {
-        try {
-          const detailHtml = detailTmpl(newDetailInfo);
-          const detailFilename = path.join(ASSETS_PATH, 'goods', itemInfo.goodsno, 'detail.html');
-          fs.writeFileSync(path.join(ASSETS_PATH, 'goods', itemInfo.goodsno, 'detail.html'), detailHtml, 'utf-8');
-          const detailUrl = path.relative(ROOT_PATH, detailFilename);
-          itemInfo.detailUrl = formatPath(detailUrl);
-        } catch (e) {
-          logger.error('创建详情页 detail.html 文件出错.');
-          return Promise.reject(e);
-        }
-        logger.info('详情页 detail.html 创建成功.');
-        return downloadAllImgPromise(originInfo);
-      })
-      .then((downloadInfo) => {
-        itemInfo.imgs = _.chain(downloadInfo.downloadImgs)
-          .filter(function (img: any) {
-            return img.filename;
-          })
-          .map((img: any) => {
-            return {url: formatPath(path.relative(ROOT_PATH, img.filename))};
-          })
-          .value();
-        logger.info(`图片下载完成: 成功${downloadInfo.successCount}, 失败${downloadInfo.failedCount}.`);
-        return createThumbPromise(itemInfo.imgs[0].url);
-      })
-      .then((obj) => {
-        const {thumb} = obj;
-        itemInfo.thumbnail = {
-          url: formatPath(path.relative(ROOT_PATH, thumb))
-        };
-        logger.info(`生成缩略图:`, path.basename(thumb));
-        const infoFilename = saveItemInfo(itemInfo);
-        logger.info(`商品信息 ${infoFilename} 保存成功.`);
-        logger.info('<------');
-      })
-      .catch(err => {
-        if (_.includes(err, 'Exist')) {
-          logger.warn('商品信息已存在:', itemInfo.goodsno);
-          return;
-        }
-        logger.error(err);
-      });
+          return createDetailPromise(detailInfo, itemInfo);
+        })
+        .then((newDetailInfo: IDetailInfo) => {
+          try {
+            const detailHtml = detailTmpl(newDetailInfo);
+            const detailFilename = path.join(ASSETS_PATH, 'goods', itemInfo.goodsno, 'detail.html');
+            fs.writeFileSync(path.join(ASSETS_PATH, 'goods', itemInfo.goodsno, 'detail.html'), detailHtml, 'utf-8');
+            const detailUrl = path.relative(ROOT_PATH, detailFilename);
+            itemInfo.detailUrl = formatPath(detailUrl);
+          } catch (e) {
+            logger.error('创建详情页 detail.html 文件出错.');
+            return Promise.reject(e);
+          }
+          logger.info('详情页 detail.html 创建成功.');
+          return downloadAllImgPromise(originInfo);
+        })
+        .then((downloadInfo) => {
+          itemInfo.imgs = _.chain(downloadInfo.downloadImgs)
+            .filter(function (img: any) {
+              return img.filename;
+            })
+            .map((img: any) => {
+              return {url: formatPath(path.relative(ROOT_PATH, img.filename))};
+            })
+            .value();
+          logger.info(`图片下载完成: 成功${downloadInfo.successCount}, 失败${downloadInfo.failedCount}.`);
+          return createThumbPromise(itemInfo.imgs[0].url);
+        })
+        .then((obj) => {
+          const {thumb} = obj;
+          itemInfo.thumbnail = {
+            url: formatPath(path.relative(ROOT_PATH, thumb))
+          };
+          logger.info(`生成缩略图:`, path.basename(thumb));
+          const infoFilename = saveItemInfo(itemInfo);
+          logger.info(`商品信息 ${infoFilename} 保存成功.`);
+          logger.info('<------');
+          resolve(itemInfo.goodsno);
+        })
+        .catch(err => {
+          if (_.includes(err, 'Exist')) {
+            logger.warn('商品信息已存在:', itemInfo.goodsno);
+            reject(err);
+            return;
+          }
+          logger.error(err);
+          reject(err);
+        });
+    });
   }
 
   function createDetailPromise (detailInfo: IDetailInfo, itemInfo: IItemInfo): Promise<IDetailInfo> {
@@ -129,7 +135,9 @@ module item {
     newDetailInfo.attrs = attrs;
     newDetailInfo.bookAttrs = _.map(bookAttrs, (bookAttr) => {
       let newBookAttr = _.clone(<IDetailAttr>bookAttr);
-      let $ = cheerio.load(bookAttr.value);
+      let $ = cheerio.load(`<div id="cheerio-wrapper">${bookAttr.value}</div>`);
+      let $wrapper = $('#cheerio-wrapper');
+      let description: string;
       $('img').each((i, el) => {
         const $el = $(el);
         const src = $el.attr('src');
@@ -138,7 +146,16 @@ module item {
         $el.attr('src', newSrc);
         images.push([src, path.join(ASSETS_PATH, 'goods', goodsno, newSrc)]);
       });
-      newBookAttr.value = global.unescape($.html().replace(/&#x/g, '%u').replace(/;/g, ''));
+      if (bookAttr.label === '编辑推荐') {
+        description = _.trim($wrapper.text()).split('　')[0];
+        if (description.length > DESCRIPTION_MAX_LENGTH) {
+          description = description.substr(0, DESCRIPTION_MAX_LENGTH);
+        }
+        if (description) {
+          itemInfo.description = description;
+        }
+      }
+      newBookAttr.value = global.unescape($wrapper.html().replace(/&#x/g, '%u').replace(/;/g, ''));
       return newBookAttr;
     });
     const detailFile = saveJson(newDetailInfo, path.join(ASSETS_PATH, 'goods', goodsno, 'detail.json'));

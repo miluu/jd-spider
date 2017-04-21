@@ -10,7 +10,13 @@ import {
 module app {
   export function run () {
     logger.info('App start.');
-    item.getItem('https://item.m.jd.com/ware/view.action?wareId=11687858', '儿童绘本');
+    item.getItemPromise('https://item.m.jd.com/ware/view.action?wareId=11687858', '儿童绘本')
+      .then((goodsno) => {
+        logger.info(`********** ${goodsno} **********`);
+      })
+      .catch((err) => {
+        logger.error(`********** ${err} **********`);
+      });
   }
 }
 
