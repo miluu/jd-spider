@@ -7,6 +7,7 @@ import * as _ from 'lodash';
 import * as Promise from 'bluebird';
 import logger from './logger';
 import {ASSETS_PATH, ROOT_PATH} from './paths';
+
 const mkdirp = require('mkdirp');
 
 module item {
@@ -28,12 +29,25 @@ module item {
     height?: number;
   }
 
+  interface IDetailAttr {
+    lable: string;
+    value: string;
+    operator?: string;
+  }
+
+  interface IDetailInfo {
+    attrs: IDetailAttr[];
+    bookAttrs: IDetailAttr[];
+  }
+
   export function getItem (url: string, brand: string) {
     logger.info(`开始获取商品信息: ${url}`);
 
     let itemInfo: IItemInfo = {};
+    let originInfo: IItemInfo;
     analysePagePromise(url)
       .then(info => {
+        originInfo = info;
         logger.info('页面解析完成。');
         info.brand = brand;
         itemInfo.brand = info.brand;
@@ -41,10 +55,24 @@ module item {
         itemInfo.description = info.description;
         itemInfo.price = info.price;
         itemInfo.goodsno = info.goodsno;
-        if (checkItemExist(info.goodsno)) {
-          return Promise.reject('Exist');
+        return getDetailInfoPromise(originInfo.detailsApi);
+      })
+      .then((orginDetailInfo: any) => {
+        let detailInfo: IDetailInfo;
+        try {
+          detailInfo = {
+            attrs: orginDetailInfo.ware.attrs,
+            bookAttrs: orginDetailInfo.ware.bookAttrs
+          };
+        } catch (e) {
+          return Promise.reject(e);
         }
-        return downloadAllImgPromise(info);
+
+        return createDetailPromise(detailInfo, itemInfo.goodsno);
+      })
+      .then((newDetailInfo) => {
+        console.log(newDetailInfo);
+        return downloadAllImgPromise(originInfo);
       })
       .then((downloadInfo) => {
         itemInfo.imgs = _.chain(downloadInfo.downloadImgs)
@@ -76,6 +104,77 @@ module item {
       });
   }
 
+  function createDetailPromise (detailInfo: IDetailInfo, goodsno: string): Promise<any> {
+    let newDetailInfo = (<IDetailInfo>{});
+    let {attrs, bookAttrs} = detailInfo;
+    let images: [string, string][] = [];
+    newDetailInfo.attrs = attrs;
+    newDetailInfo.bookAttrs = _.map(bookAttrs, (bookAttr) => {
+      let newBookAttr = _.clone(<IDetailAttr>bookAttr);
+      let $ = cheerio.load(bookAttr.value);
+      $('img').each((i, el) => {
+        const $el = $(el);
+        const src = $el.attr('src');
+        const newSrc = `detail-images/${newKey(goodsno + '_')}.jpg`;
+        $el.removeAttr('title');
+        $el.attr('src', newSrc);
+        images.push([src, path.join(ASSETS_PATH, 'goods', goodsno, newSrc)]);
+      });
+      newBookAttr.value = global.unescape($.html().replace(/&#x/g, '%u').replace(/;/g, ''));
+      return newBookAttr;
+    });
+    const detailFile = saveJson(newDetailInfo, path.join(ASSETS_PATH, 'goods', goodsno, 'detail.json'));
+    return new Promise((resolve, reject) => {
+      if (detailFile) {
+        logger.info('详情信息保存成功:', detailFile);
+      } else {
+        logger.error('详情信息保存失败.');
+        reject(`${goodsno} 详情信息保存失败.`);
+      }
+      downloadDetailImgPromise(images, goodsno)
+        .then((obj) => {
+          logger.info(`详情图片下载完成: 成功${obj.successCount}, 失败${obj.failedCount}.`);
+          resolve(newDetailInfo);
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  function downloadDetailImgPromise (images: [string, string][], goodsno: string): Promise<any> {
+    let count = images.length;
+    let successCount = 0;
+    let failedCount = 0;
+    let downloadImgs: {url: string; filename: string}[] = [];
+    return new Promise((resolve, reject) => {
+      _.forEach(images, (image, index) => {
+        const url = image[0];
+        const fullFilename = image[1];
+        const filename = path.basename(fullFilename);
+        downloadImgPromise(url, fullFilename)
+          .then(obj => {
+            successCount++;
+            logger.debug(`详情图片下载成功: ${url} ---> ${filename}`);
+            finishHandle(url, fullFilename, index);
+          })
+          .catch(err => {
+            failedCount++;
+            logger.warn(`详情图片下载失败: ${url}`);
+            finishHandle(url, undefined, index);
+          });
+      });
+
+      function finishHandle (url: string, filename: string, index: number) {
+        downloadImgs[index] = {url, filename};
+        if (successCount + failedCount < count) {
+          return;
+        }
+        resolve({successCount, failedCount, downloadImgs});
+      }
+    });
+  }
+
   function checkItemExist (goodsno: string): boolean {
     const infoFilename = path.join(ASSETS_PATH, 'goods', goodsno, 'item.json');
     return fs.existsSync(infoFilename);
@@ -88,6 +187,20 @@ module item {
     mkdirp.sync(filedir);
     fs.writeFileSync(path.join(filedir, filename), infoStr);
     return filename;
+  }
+
+  function saveJson (obj: any, filename: string): string {
+    const filedir = path.dirname(filename);
+    const basename = path.basename(filename);
+    let infoStr;
+    try {
+      infoStr = JSON.stringify(obj, null, 4);
+      mkdirp.sync(filedir);
+      fs.writeFileSync(filename, infoStr);
+    } catch (e) {
+      return;
+    }
+    return basename;
   }
 
   function analysePagePromise (url: string): Promise<IItemInfo> {
@@ -222,6 +335,31 @@ module item {
   function formatPath(filePath: string) {
     const pathArr = filePath.split(path.sep);
     return pathArr.join('/');
+  }
+
+  function getDetailInfoPromise (detailsApi: string) {
+    return new Promise((resolve, reject) => {
+      request(detailsApi, (error, response, body) => {
+        if (error) {
+          reject(error);
+        }
+        const code = response && response.statusCode;
+        let err: string;
+        if (code !== 200) {
+          err = 'Response status code: ' + code;
+          reject(err);
+        } else {
+          let detailInfo;
+          try {
+            detailInfo = JSON.parse(body);
+          } catch (e) {
+            reject('JSON parse error.');
+            return;
+          }
+          resolve(detailInfo);
+        }
+      });
+    });
   }
 
   let uniqKey = 0;
