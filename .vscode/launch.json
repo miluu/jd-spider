@@ -9,14 +9,14 @@
       "type": "node",
       "request": "launch",
       "name": "list",
-      "program": "${workspaceRoot}\\list.js",
+      "program": "${workspaceRoot}/list.js",
       "outFiles": []
     },
     {
       "type": "node",
       "request": "launch",
       "name": "index",
-      "program": "${workspaceRoot}\\index.js",
+      "program": "${workspaceRoot}/index.js",
       "outFiles": []
     },
     {

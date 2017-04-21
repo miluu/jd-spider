@@ -6,6 +6,7 @@ import * as path from 'path';
 import * as _ from 'lodash';
 import * as Promise from 'bluebird';
 import logger from './logger';
+import util from './util';
 import {ASSETS_PATH, ROOT_PATH, CONFIG_PATH} from './paths';
 
 const mkdirp = require('mkdirp');
@@ -127,6 +128,10 @@ module item {
     });
   }
 
+  export function getItemPageUrl(goodsno: string): string {
+    return `https://item.m.jd.com/product/${goodsno}.html`;
+  }
+
   function createDetailPromise (detailInfo: IDetailInfo, itemInfo: IItemInfo): Promise<IDetailInfo> {
     let goodsno = itemInfo.goodsno;
     let newDetailInfo = (<IDetailInfo>{});
@@ -158,7 +163,7 @@ module item {
       newBookAttr.value = global.unescape($wrapper.html().replace(/&#x/g, '%u').replace(/;/g, ''));
       return newBookAttr;
     });
-    const detailFile = saveJson(newDetailInfo, path.join(ASSETS_PATH, 'goods', goodsno, 'detail.json'));
+    const detailFile = util.saveJson(newDetailInfo, path.join(ASSETS_PATH, 'goods', goodsno, 'detail.json'));
     return new Promise<IDetailInfo>((resolve, reject) => {
       if (detailFile) {
         logger.info('详情信息保存成功:', detailFile);
@@ -222,20 +227,6 @@ module item {
     mkdirp.sync(filedir);
     fs.writeFileSync(path.join(filedir, filename), infoStr);
     return filename;
-  }
-
-  function saveJson (obj: any, filename: string): string {
-    const filedir = path.dirname(filename);
-    const basename = path.basename(filename);
-    let infoStr;
-    try {
-      infoStr = JSON.stringify(obj, null, 4);
-      mkdirp.sync(filedir);
-      fs.writeFileSync(filename, infoStr);
-    } catch (e) {
-      return;
-    }
-    return basename;
   }
 
   function analysePagePromise (url: string): Promise<IItemInfo> {
