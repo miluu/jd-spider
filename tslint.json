@@ -45,7 +45,7 @@
     "semicolon": true,
     "triple-equals": [true, "allow-null-check"],
     "use-strict": true,
-    "variable-name": "allow-leading-underscore",
+    "variable-name": [true, "allow-leading-underscore"],
     "whitespace": [true,
       "check-branch",
       "check-decl",
