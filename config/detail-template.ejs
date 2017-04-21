@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Detail - Elo Wall</title>
+  <style>
+  </style>
+  <link rel="stylesheet" href="../../css/detail-style.css">
+</head>
+
+<body>
+  <div class="content">
+    <% _.forEach(bookAttrs, function (bookAttr) { %>
+    <div class="content-block">
+      <div class="block-title">
+        <h3>【<%= bookAttr.label %>】</h3>
+      </div>
+      <div class="block-detail">
+        <%= bookAttr.value %>
+      </div>
+    </div>
+    <% }) %>
+  </div>
+
+  <script src="../../../libs/add-on/jquery.min.js"></script>
+  <script src="../../../libs/add-on/jquery.nicescroll.min.js"></script>
+  <script>
+  $('html').niceScroll({
+    touchbehavior: true
+  })
+  </script>
+</body>
+
+</html>

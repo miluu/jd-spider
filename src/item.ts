@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as _ from 'lodash';
 import * as Promise from 'bluebird';
 import logger from './logger';
-import {ASSETS_PATH, ROOT_PATH} from './paths';
+import {ASSETS_PATH, ROOT_PATH, CONFIG_PATH} from './paths';
 
 const mkdirp = require('mkdirp');
 
@@ -40,7 +40,10 @@ module item {
     bookAttrs: IDetailAttr[];
   }
 
+  const detailTmpl = getDetailTemplate();
+
   export function getItem (url: string, brand: string) {
+    logger.info('------>');
     logger.info(`开始获取商品信息: ${url}`);
 
     let itemInfo: IItemInfo = {};
@@ -55,6 +58,9 @@ module item {
         itemInfo.description = info.description;
         itemInfo.price = info.price;
         itemInfo.goodsno = info.goodsno;
+        if (checkItemExist(info.goodsno)) {
+          return Promise.reject('Exist');
+        }
         return getDetailInfoPromise(originInfo.detailsApi);
       })
       .then((orginDetailInfo: any) => {
@@ -68,10 +74,20 @@ module item {
           return Promise.reject(e);
         }
 
-        return createDetailPromise(detailInfo, itemInfo.goodsno);
+        return createDetailPromise(detailInfo, itemInfo);
       })
-      .then((newDetailInfo) => {
-        console.log(newDetailInfo);
+      .then((newDetailInfo: IDetailInfo) => {
+        try {
+          const detailHtml = detailTmpl(newDetailInfo);
+          const detailFilename = path.join(ASSETS_PATH, 'goods', itemInfo.goodsno, 'detail.html');
+          fs.writeFileSync(path.join(ASSETS_PATH, 'goods', itemInfo.goodsno, 'detail.html'), detailHtml, 'utf-8');
+          const detailUrl = path.relative(ROOT_PATH, detailFilename);
+          itemInfo.detailUrl = formatPath(detailUrl);
+        } catch (e) {
+          logger.error('创建详情页 detail.html 文件出错.');
+          return Promise.reject(e);
+        }
+        logger.info('详情页 detail.html 创建成功.');
         return downloadAllImgPromise(originInfo);
       })
       .then((downloadInfo) => {
@@ -94,17 +110,19 @@ module item {
         logger.info(`生成缩略图:`, path.basename(thumb));
         const infoFilename = saveItemInfo(itemInfo);
         logger.info(`商品信息 ${infoFilename} 保存成功.`);
+        logger.info('<------');
       })
       .catch(err => {
         if (_.includes(err, 'Exist')) {
-          logger.warn('商品信息已存在.');
+          logger.warn('商品信息已存在:', itemInfo.goodsno);
           return;
         }
         logger.error(err);
       });
   }
 
-  function createDetailPromise (detailInfo: IDetailInfo, goodsno: string): Promise<any> {
+  function createDetailPromise (detailInfo: IDetailInfo, itemInfo: IItemInfo): Promise<IDetailInfo> {
+    let goodsno = itemInfo.goodsno;
     let newDetailInfo = (<IDetailInfo>{});
     let {attrs, bookAttrs} = detailInfo;
     let images: [string, string][] = [];
@@ -115,7 +133,7 @@ module item {
       $('img').each((i, el) => {
         const $el = $(el);
         const src = $el.attr('src');
-        const newSrc = `detail-images/${newKey(goodsno + '_')}.jpg`;
+        const newSrc = `detail-imgs/${newKey(goodsno + '_')}.jpg`;
         $el.removeAttr('title');
         $el.attr('src', newSrc);
         images.push([src, path.join(ASSETS_PATH, 'goods', goodsno, newSrc)]);
@@ -124,7 +142,7 @@ module item {
       return newBookAttr;
     });
     const detailFile = saveJson(newDetailInfo, path.join(ASSETS_PATH, 'goods', goodsno, 'detail.json'));
-    return new Promise((resolve, reject) => {
+    return new Promise<IDetailInfo>((resolve, reject) => {
       if (detailFile) {
         logger.info('详情信息保存成功:', detailFile);
       } else {
@@ -360,6 +378,11 @@ module item {
         }
       });
     });
+  }
+
+  function getDetailTemplate () {
+    const tplStr = fs.readFileSync(path.join(CONFIG_PATH, 'detail-template.ejs'), 'utf-8');
+    return _.template(tplStr);
   }
 
   let uniqKey = 0;

@@ -10,7 +10,7 @@ import {
 module app {
   export function run () {
     logger.info('App start.');
-    item.getItem('https://item.m.jd.com/product/11781267.html', '儿童绘本');
+    item.getItem('https://item.m.jd.com/ware/view.action?wareId=11687858', '儿童绘本');
   }
 }
 
