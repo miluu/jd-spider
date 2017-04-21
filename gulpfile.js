@@ -1,6 +1,7 @@
 var gulp = require('gulp');
 var del = require('del');
 var ts = require('gulp-typescript');
+var sourcemaps = require('gulp-sourcemaps');
 var path = require('path');
 
 var BUILT_PATH = 'built';
@@ -17,8 +18,10 @@ gulp.task('clean', function (paths) {
 
 gulp.task('default', function () {
   return tsProject.src()
+    .pipe(sourcemaps.init({loadMaps: true}))
     .pipe(tsProject())
     .js
+    .pipe(sourcemaps.write('./'))
     .pipe(gulp.dest(BUILT_PATH));
 });
 

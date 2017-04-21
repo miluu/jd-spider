@@ -7,6 +7,8 @@ import {
   FILES_PATH
 } from './paths';
 
+import catelogy from './catelogy';
+
 module app {
   export function run () {
     logger.info('App start.');
@@ -17,6 +19,10 @@ module app {
       .catch((err) => {
         logger.error(`********** ${err} **********`);
       });
+  }
+  export function runCate {
+    logger.info('Cate App start.');
+    catelogy.getList();
   }
 }
 
