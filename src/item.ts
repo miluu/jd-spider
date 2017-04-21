@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as _ from 'lodash';
 import * as Promise from 'bluebird';
 import logger from './logger';
-import {FILES_PATH, ROOT_PATH} from './paths';
+import {ASSETS_PATH, ROOT_PATH} from './paths';
 const mkdirp = require('mkdirp');
 
 module item {
@@ -21,11 +21,13 @@ module item {
     thumbnail?: IImg;
     imgs?: IImg[];
   }
+
   export interface IImg {
     url: string;
     width?: number;
     height?: number;
   }
+
   export function getItem (url: string, brand: string) {
     logger.info(`开始获取商品信息: ${url}`);
 
@@ -39,6 +41,9 @@ module item {
         itemInfo.description = info.description;
         itemInfo.price = info.price;
         itemInfo.goodsno = info.goodsno;
+        if (checkItemExist(info.goodsno)) {
+          return Promise.reject('Exist');
+        }
         return downloadAllImgPromise(info);
       })
       .then((downloadInfo) => {
@@ -47,7 +52,7 @@ module item {
             return img.filename;
           })
           .map((img: any) => {
-            return {url: path.relative(ROOT_PATH, img.filename)};
+            return {url: formatPath(path.relative(ROOT_PATH, img.filename))};
           })
           .value();
         logger.info(`图片下载完成: 成功${downloadInfo.successCount}, 失败${downloadInfo.failedCount}.`);
@@ -56,20 +61,29 @@ module item {
       .then((obj) => {
         const {thumb} = obj;
         itemInfo.thumbnail = {
-          url: path.relative(ROOT_PATH, thumb)
+          url: formatPath(path.relative(ROOT_PATH, thumb))
         };
         logger.info(`生成缩略图:`, path.basename(thumb));
         const infoFilename = saveItemInfo(itemInfo);
         logger.info(`商品信息 ${infoFilename} 保存成功.`);
       })
       .catch(err => {
+        if (_.includes(err, 'Exist')) {
+          logger.warn('商品信息已存在.');
+          return;
+        }
         logger.error(err);
       });
   }
 
+  function checkItemExist (goodsno: string): boolean {
+    const infoFilename = path.join(ASSETS_PATH, 'goods', goodsno, 'item.json');
+    return fs.existsSync(infoFilename);
+  }
+
   function saveItemInfo (info: IItemInfo) {
     const filename = 'item.json';
-    const filedir = path.join(FILES_PATH, 'goods', info.goodsno);
+    const filedir = path.join(ASSETS_PATH, 'goods', info.goodsno);
     const infoStr = JSON.stringify(info, null, 4);
     mkdirp.sync(filedir);
     fs.writeFileSync(path.join(filedir, filename), infoStr);
@@ -133,7 +147,7 @@ module item {
       _.forEach(imgs, (img, index) => {
         const url = img.url;
         const filename = newKey(`${goodsno}_`) + '.jpg';
-        const fullFilename = path.join(FILES_PATH, 'goods', goodsno, 'imgs', filename);
+        const fullFilename = path.join(ASSETS_PATH, 'goods', goodsno, 'imgs', filename);
         downloadImgPromise(url, fullFilename)
           .then(obj => {
             successCount++;
@@ -203,6 +217,11 @@ module item {
           resolve({source: sourceFilename, thumb: thumbFilename});
         });
     });
+  }
+
+  function formatPath(filePath: string) {
+    const pathArr = filePath.split(path.sep);
+    return pathArr.join('/');
   }
 
   let uniqKey = 0;
