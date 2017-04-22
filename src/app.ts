@@ -13,14 +13,9 @@ import catelogy from './catelogy';
 module app {
   export function run () {
     logger.info('App start.');
-    new Promise<any>((resolve, reject) => {
-      setTimeout(() => {
-        resolve();
-      }, 60 * 60 * 1000);
-    })
-      .then()
-      .catch();
-    catelogy.getCatelogyItems([0, 3]);
+    const preProgress = util.getProgress();
+    const currentProgress = util.nextPageProgress(preProgress);
+    catelogy.getCatelogyItems(currentProgress);
   }
 }
 

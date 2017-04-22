@@ -226,8 +226,12 @@ module item {
     const filename = 'item.json';
     const filedir = path.join(ASSETS_PATH, 'goods', info.goodsno);
     const infoStr = JSON.stringify(info, null, 4);
+    const recordFilename = `../list.txt`;
+    let listData = '\r\n' + info.goodsno + '    ->    ';
+    listData += info.brand;
     mkdirp.sync(filedir);
-    fs.writeFileSync(path.join(filedir, filename), infoStr);
+    fs.writeFileSync(path.join(filedir, filename), infoStr, 'utf-8');
+    fs.appendFileSync(path.join(filedir, recordFilename), listData, 'utf-8');
     return filename;
   }
 

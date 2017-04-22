@@ -129,6 +129,7 @@ module catelogy {
         next();
       });
     function next() {
+      util.saveProgress(progress);
       const nextProgress = util.nextPageProgress(progress);
       logger.info(`准备获取下一页内容 >>>>>>`);
       getCatelogyItems(nextProgress);
