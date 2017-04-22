@@ -61,21 +61,6 @@
         "cid": 100002751
     },
     {
-        "name": "电子书",
-        "catelogyList": [
-            {
-                "icon": "http://m.360buyimg.com/mobile/s100x100_jfs/t319/308/1958474267/16718/9924b5ec/5448a9d3N7387552e.jpg",
-                "name": "电子书",
-                "action": "http://e.m.jd.com",
-                "virtualFlag": 3,
-                "cid": 100001653,
-                "destination": "e_book"
-            }
-        ],
-        "columNum": 3,
-        "cid": 100001652
-    },
-    {
         "name": "中小学教辅",
         "catelogyList": [
             {
