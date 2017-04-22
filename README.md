@@ -10,3 +10,4 @@
     > npm run build
 * 在项目根目录下执行以下命令运行程序
     > node index
+* 按 `ctrl + c` 结束程序运行。

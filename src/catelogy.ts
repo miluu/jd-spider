@@ -131,6 +131,10 @@ module catelogy {
     function next() {
       util.saveProgress(progress);
       const nextProgress = util.nextPageProgress(progress);
+      if (nextProgress[0] >= catelogyList.length) {
+        logger.info('全部分类已获取完成.');
+        return;
+      }
       logger.info(`准备获取下一页内容 >>>>>>`);
       getCatelogyItems(nextProgress);
     }
