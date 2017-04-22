@@ -157,7 +157,7 @@ module item {
           itemInfo.description = description;
         }
       }
-      newBookAttr.value = global.unescape($wrapper.html().replace(/&#x/g, '%u').replace(/;/g, ''));
+      newBookAttr.value = global.unescape($wrapper.html().replace(/&#x/g, '%u').replace(/;/g, '').replace(/%uA0/g, ' ').replace(/%uB7/g, '·'));
       return newBookAttr;
     });
     const detailFile = util.saveJson(newDetailInfo, path.join(ASSETS_PATH, 'goods', goodsno, 'detail.json'));
