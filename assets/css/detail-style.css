@@ -18,6 +18,10 @@ body {
   max-width: 100%;
 }
 
+.content p {
+  margin: 0;
+}
+
 .content .block-title h3 {
   font-size: 16px;
   font-weight: bold;

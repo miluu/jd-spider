@@ -13,14 +13,14 @@ import catelogy from './catelogy';
 module app {
   export function run () {
     logger.info('App start.');
-    // item.getItemPromise('https://item.m.jd.com/product/11334935.html?sid=86176584eed5d5653f0321399be63ad3', '儿童绘本')
-    //   .then((goodsno) => {
-    //     logger.info(`********** ${goodsno} **********`);
-    //   })
-    //   .catch((err) => {
-    //     logger.error(`********** ${err} **********`);
-    //   });
-    catelogy.getPageItemsPromise([0, 1]);
+    new Promise<any>((resolve, reject) => {
+      setTimeout(() => {
+        resolve();
+      }, 60 * 60 * 1000);
+    })
+      .then()
+      .catch();
+    catelogy.getCatelogyItems([0, 3]);
   }
 }
 

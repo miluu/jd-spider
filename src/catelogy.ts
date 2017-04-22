@@ -36,12 +36,14 @@ module catelogy {
       request(currentApi, (error, response, body) => {
         if (error) {
           reject(error);
+          return;
         }
         const code = response && response.statusCode;
         let err: string;
         if (code !== 200) {
           err = 'Response status code: ' + code;
           reject(err);
+          return;
         } else {
           let obj;
           try {
@@ -78,6 +80,9 @@ module catelogy {
           let successCount = 0;
           let failedCount = 0;
           let count = list.length;
+          if (count === 0) {
+            finishHandle(successCount, failedCount, count);
+          }
           _.forEach(list, listItem => {
             const goodsno = listItem.wareId;
             const itemPageUrl = item.getItemPageUrl(goodsno);
@@ -97,6 +102,7 @@ module catelogy {
           reject(err);
         });
       function finishHandle (successCount: number, failedCount: number, count: number) {
+        logger.info('>>>>>>>>>>>>>>>>>>', successCount, failedCount, count);
         if (count > successCount + failedCount) {
           return;
         }
@@ -104,6 +110,29 @@ module catelogy {
         resolve({successCount, failedCount, count});
       }
     });
+  }
+
+  export function getCatelogyItems(progress: [number, number]) {
+    const [categoryIndex, page] = progress;
+    const categoryName = catelogyList[categoryIndex].name;
+    if (page > 25) {
+      logger.info(`分类 [${categoryName}] 获取完毕.`);
+      return;
+    }
+    getPageItemsPromise(progress)
+      .then(() => {
+        logger.info(`分类 [${categoryName}] 第 ${page} 页获取完成.`);
+        next();
+      })
+      .catch(err => {
+        logger.error(`分类 [${categoryName}] 第 ${page} 页获取失败.`);
+        next();
+      });
+    function next() {
+      const nextProgress = util.nextPageProgress(progress);
+      logger.info(`准备获取下一页内容 >>>>>>`);
+      getCatelogyItems(nextProgress);
+    }
   }
 
   function getApiUrl (category: ICatelogy, page: number = 1) {

@@ -45,7 +45,6 @@ module item {
   const DESCRIPTION_MAX_LENGTH = 70;
 
   export function getItemPromise (url: string, brand: string): Promise<any> {
-    logger.info('------>');
     logger.info(`开始获取商品信息: ${url}`);
 
     let itemInfo: IItemInfo = {};
@@ -76,7 +75,6 @@ module item {
           } catch (e) {
             return Promise.reject(e);
           }
-
           return createDetailPromise(detailInfo, itemInfo);
         })
         .then((newDetailInfo: IDetailInfo) => {
@@ -90,7 +88,7 @@ module item {
             logger.error('创建详情页 detail.html 文件出错.');
             return Promise.reject(e);
           }
-          logger.info('详情页 detail.html 创建成功.');
+          logger.info(`详情页 ${itemInfo.goodsno} detail.html 创建成功.`);
           return downloadAllImgPromise(originInfo);
         })
         .then((downloadInfo) => {
@@ -112,8 +110,7 @@ module item {
           };
           logger.info(`生成缩略图:`, path.basename(thumb));
           const infoFilename = saveItemInfo(itemInfo);
-          logger.info(`商品信息 ${infoFilename} 保存成功.`);
-          logger.info('<------');
+          logger.info(`商品信息${itemInfo.goodsno} ${infoFilename} 保存成功.`);
           resolve(itemInfo.goodsno);
         })
         .catch(err => {
@@ -170,6 +167,7 @@ module item {
       } else {
         logger.error('详情信息保存失败.');
         reject(`${goodsno} 详情信息保存失败.`);
+        return;
       }
       downloadDetailImgPromise(images, goodsno)
         .then((obj) => {
@@ -188,6 +186,9 @@ module item {
     let failedCount = 0;
     let downloadImgs: {url: string; filename: string}[] = [];
     return new Promise((resolve, reject) => {
+      if (count === 0) {
+        finishHandle(undefined, undefined, -1);
+      }
       _.forEach(images, (image, index) => {
         const url = image[0];
         const fullFilename = image[1];
@@ -217,7 +218,8 @@ module item {
 
   function checkItemExist (goodsno: string): boolean {
     const infoFilename = path.join(ASSETS_PATH, 'goods', goodsno, 'item.json');
-    return fs.existsSync(infoFilename);
+    const b = fs.existsSync(infoFilename);
+    return b;
   }
 
   function saveItemInfo (info: IItemInfo) {
@@ -234,12 +236,14 @@ module item {
       request(url, (error, response, body) => {
         if (error) {
           reject(error);
+          return;
         }
         const code = response && response.statusCode;
         let err: string;
         if (code !== 200) {
           err = 'Response status code: ' + code;
           reject(err);
+          return;
         }
         const info = analyseHtml(body);
         resolve(info);
@@ -283,6 +287,9 @@ module item {
     let failedCount = 0;
     let downloadImgs: {url: string; filename: string}[] = [];
     return new Promise((resolve, reject) => {
+      if (count === 0) {
+        finishHandle(undefined, undefined, -1);
+      }
       _.forEach(imgs, (img, index) => {
         const url = img.url;
         const filename = newKey(`${goodsno}_`) + '.jpg';
@@ -321,12 +328,14 @@ module item {
       request(url, (error, response, body) => {
         if (error) {
           reject(error);
+          return;
         }
         const code = response && response.statusCode;
         let err: string;
         if (code !== 200) {
           err = 'Response status code: ' + code;
           reject(err);
+          return;
         } else {
           resolve({url, filename});
         }
@@ -368,12 +377,14 @@ module item {
       request(detailsApi, (error, response, body) => {
         if (error) {
           reject(error);
+          return;
         }
         const code = response && response.statusCode;
         let err: string;
         if (code !== 200) {
           err = 'Response status code: ' + code;
           reject(err);
+          return;
         } else {
           let detailInfo;
           try {
@@ -384,6 +395,9 @@ module item {
           }
           resolve(detailInfo);
         }
+      })
+      .on('error', (err) => {
+        reject(err);
       });
     });
   }

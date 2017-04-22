@@ -21,5 +21,7 @@ log4js.configure({
   appenders: config
 });
 
+
 const logger = log4js.getLogger('spider');
+logger.setLevel('INFO');
 export default logger;
