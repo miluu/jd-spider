@@ -9,6 +9,7 @@ import {
 } from './paths';
 
 import catelogy from './catelogy';
+import keywords from './keywords';
 
 module app {
   export function run () {
@@ -16,6 +17,10 @@ module app {
     const preProgress = util.getProgress();
     const currentProgress = util.nextPageProgress(preProgress);
     catelogy.getCatelogyItems(currentProgress);
+  }
+  export function getKewordsGoods () {
+    logger.info('App start. [getKewordsGoods]');
+    keywords.getKeywordsGoods();
   }
 }
 

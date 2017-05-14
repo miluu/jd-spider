@@ -8,8 +8,8 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "list",
-      "program": "${workspaceRoot}/list.js",
+      "name": "run test",
+      "program": "${workspaceRoot}/test.js",
       "outFiles": []
     },
     {

@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as _ from 'lodash';
 import * as Promise from 'bluebird';
+import * as iconv from 'iconv-lite';
 import logger from './logger';
 import util from './util';
 import {ASSETS_PATH, ROOT_PATH, CONFIG_PATH} from './paths';
@@ -22,6 +23,7 @@ module item {
     detailUrl?: string;
     thumbnail?: IImg;
     imgs?: IImg[];
+    tags?: string[];
   }
 
   export interface IImg {
@@ -63,6 +65,10 @@ module item {
           if (checkItemExist(info.goodsno)) {
             return Promise.reject('Exist');
           }
+          return getTagsPromise(originInfo);
+        })
+        .then((tags: string[]) => {
+          itemInfo.tags = tags;
           return getDetailInfoPromise(originInfo.detailsApi);
         })
         .then((orginDetailInfo: any) => {
@@ -416,6 +422,51 @@ module item {
     let key = prefix || '';
     uniqKey++;
     return prefix + uniqKey;
+  }
+
+  function getPcPageUrl (itemInfo: IItemInfo) {
+    return `http://item.jd.com/${itemInfo.goodsno}.html`;
+  }
+
+  function getTagsPromise (itemInfo: IItemInfo): Promise<string[]> {
+    const pcPageUrl = getPcPageUrl(itemInfo);
+    return new Promise<string[]>((resolve, reject) => {
+      console.log('0000');
+      request({
+        url: pcPageUrl,
+        encoding: null
+      }, (error, response, body) => {
+        console.log(1111);
+        console.log(arguments);
+        if (error) {
+          reject(error);
+          return;
+        }
+        const code = response && response.statusCode;
+        let err: string;
+        if (code !== 200) {
+          err = 'Response status code: ' + code;
+          reject(err);
+          return;
+        }
+        const html = iconv.decode(body, 'gb2312');
+        const $ = cheerio.load(html, {decodeEntities: false});
+        let $crumbs: Cheerio;
+        console.log(2222);
+        if ($('.crumb').length) {
+          console.log(3333);
+          $crumbs = $('.crumb .item').not('.sep').not('.first').not('.ellipsis');
+        } else {
+          console.log(4444);
+          $crumbs = $('.breadcrumb').children('span').first().children('a');
+        }
+        const tags: string[] = [];
+        $crumbs.each((i, el) => {
+          tags.push(_.trim($(el).text()));
+        });
+        resolve(tags);
+      });
+    });
   }
 }
 

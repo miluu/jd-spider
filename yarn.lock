@@ -50,6 +50,12 @@
   dependencies:
     "@types/node" "*"
 
+"@types/iconv-lite":
+  version "0.0.1"
+  resolved "http://registry.npm.taobao.org/@types/iconv-lite/download/@types/iconv-lite-0.0.1.tgz#aa3b8bda2be512b1ae0a057b942e869c370a5569"
+  dependencies:
+    "@types/node" "*"
+
 "@types/lodash":
   version "4.14.62"
   resolved "http://registry.npm.taobao.org/@types/lodash/download/@types/lodash-4.14.62.tgz#8674f9861582148a60b7a89cb260f11378d11683"
@@ -935,6 +941,10 @@ http-signature@~1.1.0:
     assert-plus "^0.2.0"
     jsprim "^1.2.2"
     sshpk "^1.7.0"
+
+iconv-lite:
+  version "0.4.17"
+  resolved "http://registry.npm.taobao.org/iconv-lite/download/iconv-lite-0.4.17.tgz#4fdaa3b38acbc2c031b045d0edcdfe1ecab18c8d"
 
 inflight@^1.0.4:
   version "1.0.6"
